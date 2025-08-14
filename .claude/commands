@@ -10,12 +10,6 @@
 /build: cd python && python -m build
 /clean: cd python && rm -rf dist/ build/ *.egg-info/
 /install-dev: cd python && pip install -e ".[dev]"
-/install-mcp: cd python && pip install -e ".[mcp]"
-
-## MCP Server
-/mcp-python: cd python && python -m kicad_pcb_api.mcp.server
-/mcp-ts-build: cd mcp-server && npm install && npm run build
-/mcp-ts-dev: cd mcp-server && npm run dev
 
 ## Code Quality
 /lint: cd python && ruff check kicad_pcb_api/
@@ -36,10 +30,6 @@
 /push: git push origin main
 /tag: git tag v0.0.1 && git push origin v0.0.1
 
-## Context Portal
-/context-start: cd tools/context-portal && uvx context-portal --workspace kicad-pcb-api --port 8002
-/context-query: cd tools/context-portal && uvx context-portal query
-/context-add: cd tools/context-portal && uvx context-portal add
 
 ## Package Management
 /deps-update: cd python && pip list --outdated

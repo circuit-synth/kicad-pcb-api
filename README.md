@@ -8,7 +8,6 @@ A modern, high-performance Python library for programmatic manipulation of KiCAD
 
 - **📋 File-Based Operations**: Manipulate .kicad_pcb files without running KiCAD
 - **⚡ Advanced Placement**: Force-directed, hierarchical, and spiral algorithms
-- **🤖 AI Agent Integration**: Native MCP server for AI-assisted PCB design
 - **🔧 Enhanced Routing**: Freerouting integration with DSN export/import
 - **📚 Footprint Management**: Advanced footprint library integration
 - **✅ Format Preservation**: Exact compatibility with KiCAD's native output
@@ -22,7 +21,6 @@ A modern, high-performance Python library for programmatic manipulation of KiCAD
 | **CI/CD Compatible** | ✅ No GUI required | ❌ Requires KiCAD | ❌ Requires KiCAD |
 | **Placement Algorithms** | ✅ Multiple advanced | ⚠️ Basic | ⚠️ Manual |
 | **Routing Integration** | ✅ Freerouting + DSN | ❌ Limited | ⚠️ Basic |
-| **AI Integration** | ✅ Native MCP | ❌ None | ❌ None |
 | **Format Preservation** | ✅ Exact | ✅ Native | ✅ Native |
 
 ## 📦 Installation
@@ -106,10 +104,8 @@ kicad-pcb-api/
 │   │   ├── placement/              # Placement algorithms
 │   │   ├── routing/                # Routing integration
 │   │   ├── footprints/             # Footprint management
-│   │   ├── mcp/                    # MCP server interface
 │   │   └── utils/                  # Utilities and validation
 │   └── tests/                      # Comprehensive test suite
-├── mcp-server/                     # TypeScript MCP server
 └── examples/                       # Usage examples
 ```
 

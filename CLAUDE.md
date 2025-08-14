@@ -120,28 +120,12 @@ When working on this repository:
 2. **Test Coverage**: Add tests for new functionality
 3. **Import Management**: Keep imports clean and well-organized
 4. **Documentation**: Update docstrings and examples
-5. **MCP Integration**: Ensure MCP tools work with both servers
-
-## Context Portal Integration
-
-This repository includes **Context Portal** for enhanced AI-assisted development:
-
-```bash
-# Start Context Portal server  
-cd tools/context-portal && uvx context-portal --workspace kicad-pcb-api --port 8002
-
-# Query PCB design decisions
-uvx context-portal query "placement algorithm trade-offs"
-```
-
-Context Portal provides **structured project memory** for PCB manipulation development, enabling AI assistants to understand placement strategies, routing integration patterns, and format preservation decisions.
 
 ## Related Projects
 
 - **kicad-sch-api**: Schematic manipulation library
 - **engineering-memory-bank**: AI-powered decision documentation
 - **circuit-synth**: Main circuit design automation project
-- **Context Portal**: AI-assisted project memory system
 
 ---
 

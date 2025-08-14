@@ -50,9 +50,6 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
 ]
-mcp = [
-    "mcp>=1.0.0",
-]
 routing = [
     "docker>=6.0.0",
     "requests>=2.31.0",
@@ -64,8 +61,6 @@ Documentation = "https://kicad-pcb-api.readthedocs.io"
 Repository = "https://github.com/circuit-synth/kicad-pcb-api"
 Issues = "https://github.com/circuit-synth/kicad-pcb-api/issues"
 
-[project.scripts]
-kicad-pcb-mcp = "kicad_pcb_api.mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/kicad_pcb_api"]
