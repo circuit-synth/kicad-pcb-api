@@ -11,7 +11,6 @@ This file provides guidance to Claude Code when working on the kicad-pcb-api pro
 - **File-Based Operations**: Direct manipulation of .kicad_pcb files
 - **Advanced Placement Algorithms**: Hierarchical, spiral, and basic placement
 - **Routing Integration**: Freerouting integration with DSN export/import  
-- **MCP Server**: Native AI agent integration via Model Context Protocol
 - **Format Preservation**: Exact compatibility with KiCAD's native output
 - **Professional API**: Enhanced object model vs verbose existing solutions
 
@@ -36,17 +35,11 @@ kicad-pcb-api/
 │   │   │   └── ses_importer.py     # SES import
 │   │   ├── footprints/             # Footprint management
 │   │   │   └── footprint_library.py
-│   │   ├── mcp/                    # MCP server interface
-│   │   │   └── server.py           # Python MCP server
 │   │   └── utils/                  # Utilities
 │   │       ├── validation.py       # PCB validation
 │   │       └── kicad_cli.py        # KiCAD CLI integration
 │   ├── examples/                   # Usage examples
 │   └── tests/                      # Test suite
-├── mcp-server/                     # TypeScript MCP server
-│   ├── src/index.ts               # Main MCP server
-│   ├── package.json
-│   └── tsconfig.json
 └── README.md
 ```
 
@@ -91,12 +84,6 @@ pcb.auto_place_components('hierarchical', component_spacing=5.0)
 pcb.save()
 ```
 
-## MCP Integration
-
-The package includes both Python and TypeScript MCP servers:
-
-- **Python MCP**: `kicad-pcb-mcp` command-line tool
-- **TypeScript MCP**: Full-featured server with Python bridge
 
 ## Development Notes
 
@@ -104,22 +91,80 @@ The package includes both Python and TypeScript MCP servers:
 - **Placement Algorithms**: Focus on practical algorithms (hierarchical, spiral) - avoid complex force-directed
 - **Import Structure**: Use relative imports within package, absolute for external
 - **Testing**: Comprehensive test coverage for core functionality
-- **MCP Server**: Use stderr for logging, never stdout (breaks JSON-RPC)
 
 ## Key Dependencies
 
 - `sexpdata`: S-expression parsing
-- `loguru`: Advanced logging  
-- `mcp`: Model Context Protocol SDK
+- `loguru`: Advanced logging
+
+## Memory Bank System - REQUIRED WORKFLOW
+
+This repository uses a **Code Memory Bank** system for persistent development context. **ALL DEVELOPMENT WORK MUST FOLLOW THIS WORKFLOW.**
+
+### 🚨 MANDATORY WORKFLOW FOR ALL AI DEVELOPMENT
+
+#### 1. BEFORE Starting Any Work:
+```bash
+# ALWAYS start by reading existing context
+1. Read .memory_bank/activeContext.md (current state)
+2. Read .memory_bank/decisionLog.md (past decisions) 
+3. Read .memory_bank/progress.md (current milestones)
+4. Check .memory_bank/productContext.md (project scope)
+```
+
+#### 2. FOR New Features (REQUIRED):
+```bash
+# Create PRD BEFORE coding
+1. Write PRD in .memory_bank/features/[feature-name].md
+2. Document requirements, design approach, success criteria
+3. Get alignment on approach before implementation
+```
+
+#### 3. DURING Development:
+```bash
+# Keep context current
+1. Update .memory_bank/activeContext.md with current work
+2. Document decisions in .memory_bank/decisionLog.md (ADR format)
+3. Track progress in .memory_bank/progress.md
+```
+
+#### 4. AFTER Completing Work:
+```bash
+# ALWAYS update memory bank
+/umb
+```
+
+### Memory Bank Structure
+
+- **activeContext.md**: Current session state, focus areas, files being worked on
+- **decisionLog.md**: All architectural decisions in ADR format with rationale
+- **productContext.md**: Project overview, value proposition, target users  
+- **progress.md**: Milestones, current tasks, success metrics
+- **features/**: PRDs for all planned features (REQUIRED before coding)
+
+### 🔍 Query Memory Bank
+
+Ask natural language questions about past decisions:
+- "What placement algorithms were chosen and why?"
+- "What are the current PCB performance optimization priorities?"
+- "How does routing integration work with Freerouting?"
+
+### ⚠️ CRITICAL: No Development Without Memory Bank
+
+1. **Never start coding** without reading existing memory bank context
+2. **Always write PRDs** for new features before implementation
+3. **Document all decisions** in ADR format with rationale
+4. **Use /umb command** before ending development sessions
 
 ## Contributing
 
 When working on this repository:
 
-1. **Maintain API Compatibility**: Follow existing patterns for PCBBoard class
-2. **Test Coverage**: Add tests for new functionality
-3. **Import Management**: Keep imports clean and well-organized
-4. **Documentation**: Update docstrings and examples
+1. **Follow Memory Bank Workflow**: Use required workflow above
+2. **Maintain API Compatibility**: Follow existing patterns for PCBBoard class
+3. **Test Coverage**: Add tests for new functionality
+4. **Import Management**: Keep imports clean and well-organized
+5. **Documentation**: Update docstrings and examples
 
 ## Related Projects
 
