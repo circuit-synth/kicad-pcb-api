@@ -36,6 +36,11 @@
 /push: git push origin main
 /tag: git tag v0.0.1 && git push origin v0.0.1
 
+## Context Portal
+/context-start: cd tools/context-portal && uvx context-portal --workspace kicad-pcb-api --port 8002
+/context-query: cd tools/context-portal && uvx context-portal query
+/context-add: cd tools/context-portal && uvx context-portal add
+
 ## Package Management
 /deps-update: cd python && pip list --outdated
 /deps-install: cd python && pip install -r requirements-dev.txt

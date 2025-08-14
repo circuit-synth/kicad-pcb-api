@@ -1,0 +1,3 @@
+[submodule "tools/context-portal"]
+	path = tools/context-portal
+	url = https://github.com/GreatScottyMac/context-portal.git
