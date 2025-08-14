@@ -1,0 +1,41 @@
+# KiCAD PCB API Development Commands
+
+## Development
+/test: cd python && python -m pytest tests/ -v
+/test-imports: cd python && python -c "import kicad_pcb_api; print('All imports successful')" 
+/test-basic: cd python && python examples/basic_usage.py
+/test-placement: cd python && python examples/placement_example.py
+
+## Building and Release
+/build: cd python && python -m build
+/clean: cd python && rm -rf dist/ build/ *.egg-info/
+/install-dev: cd python && pip install -e ".[dev]"
+/install-mcp: cd python && pip install -e ".[mcp]"
+
+## MCP Server
+/mcp-python: cd python && python -m kicad_pcb_api.mcp.server
+/mcp-ts-build: cd mcp-server && npm install && npm run build
+/mcp-ts-dev: cd mcp-server && npm run dev
+
+## Code Quality
+/lint: cd python && ruff check kicad_pcb_api/
+/format: cd python && black kicad_pcb_api/ && ruff check --fix kicad_pcb_api/
+/typecheck: cd python && mypy kicad_pcb_api/
+
+## Documentation
+/docs-build: cd python && sphinx-build -b html docs/ docs/_build/html/
+/docs-serve: cd python/docs/_build/html && python -m http.server 8000
+
+## PyPI
+/pypi-check: cd python && python -m twine check dist/*
+/pypi-upload: cd python && python -m twine upload dist/* --config-file /Users/shanemattner/Desktop/circuit-synth2/.pypirc
+/pypi-upload-test: cd python && python -m twine upload --repository testpypi dist/* --config-file /Users/shanemattner/Desktop/circuit-synth2/.pypirc
+
+## Git Operations  
+/commit: git add -A && git commit -m "Update kicad-pcb-api implementation"
+/push: git push origin main
+/tag: git tag v0.0.1 && git push origin v0.0.1
+
+## Package Management
+/deps-update: cd python && pip list --outdated
+/deps-install: cd python && pip install -r requirements-dev.txt
