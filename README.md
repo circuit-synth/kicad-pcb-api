@@ -26,13 +26,16 @@ A modern, high-performance Python library for programmatic manipulation of KiCAD
 ## 📦 Installation
 
 ```bash
-# Install from PyPI (coming soon)
+# Install from PyPI
 pip install kicad-pcb-api
+
+# Or with uv
+uv add kicad-pcb-api
 
 # Or install from source
 git clone https://github.com/circuit-synth/kicad-pcb-api.git
 cd kicad-pcb-api
-pip install -e .
+uv pip install -e ".[dev]"
 ```
 
 ## 🎯 Quick Start
