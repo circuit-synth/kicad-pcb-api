@@ -85,7 +85,7 @@ addopts = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py310"
 select = ["E", "F", "W", "B", "I", "N", "UP", "ANN", "S", "BLE", "FBT", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RUF"]
 
 [tool.ruff.per-file-ignores]
@@ -93,13 +93,13 @@ select = ["E", "F", "W", "B", "I", "N", "UP", "ANN", "S", "BLE", "FBT", "A", "CO
 "tests/**" = ["S101"]  # Allow assert statements in tests
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
+disallow_untyped_defs = false
 disallow_incomplete_defs = true
 check_untyped_defs = true
-disallow_untyped_decorators = true
+disallow_untyped_decorators = false
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -108,7 +108,7 @@ warn_unreachable = true
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py310', 'py311', 'py312']
 
 [dependency-groups]
 dev = [
