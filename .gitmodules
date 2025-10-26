@@ -1,0 +1,9 @@
+[submodule "reference-implementations/kicad-sch-api"]
+	path = reference-implementations/kicad-sch-api
+	url = https://github.com/circuit-synth/kicad-sch-api.git
+[submodule "reference-implementations/pykicad"]
+	path = reference-implementations/pykicad
+	url = https://github.com/dvc94ch/pykicad.git
+[submodule "reference-implementations/kicad-skip"]
+	path = reference-implementations/kicad-skip
+	url = https://github.com/psychogenic/kicad-skip.git
