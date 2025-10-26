@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from ..core.types import Footprint
+from ..wrappers.footprint import FootprintWrapper
 from .base import IndexedCollection
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
 
     # Footprint-specific access methods
 
-    def get_by_reference(self, reference: str) -> Optional[Footprint]:
+    def get_by_reference(self, reference: str) -> Optional[FootprintWrapper]:
         """
         Get a footprint by reference designator.
 
@@ -93,7 +94,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
             reference: Reference designator (e.g., "R1", "C5", "U2")
 
         Returns:
-            Footprint if found, None otherwise
+            FootprintWrapper if found, None otherwise
 
         Example:
             fp = collection.get_by_reference("R1")
@@ -102,10 +103,10 @@ class FootprintCollection(IndexedCollection[Footprint]):
 
         idx = self._reference_index.get(reference)
         if idx is not None:
-            return self._items[idx]
+            return FootprintWrapper(self._items[idx], self)
         return None
 
-    def filter_by_lib_id(self, library: str) -> List[Footprint]:
+    def filter_by_lib_id(self, library: str) -> List[FootprintWrapper]:
         """
         Filter footprints by library ID.
 
@@ -113,7 +114,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
             library: Library name (e.g., "Resistor_SMD", "Capacitor_SMD")
 
         Returns:
-            List of footprints from the specified library
+            List of footprint wrappers from the specified library
 
         Example:
             resistors = collection.filter_by_lib_id("Resistor_SMD")
@@ -121,14 +122,14 @@ class FootprintCollection(IndexedCollection[Footprint]):
         self._ensure_indexes_current()
 
         indices = self._lib_id_index.get(library, [])
-        return [self._items[i] for i in indices]
+        return [FootprintWrapper(self._items[i], self) for i in indices]
 
-    def get_by_lib_id(self) -> Dict[str, List[Footprint]]:
+    def get_by_lib_id(self) -> Dict[str, List[FootprintWrapper]]:
         """
         Get footprints grouped by library ID.
 
         Returns:
-            Dictionary mapping library IDs to lists of footprints
+            Dictionary mapping library IDs to lists of footprint wrappers
 
         Example:
             by_lib = collection.get_by_lib_id()
@@ -139,10 +140,10 @@ class FootprintCollection(IndexedCollection[Footprint]):
 
         result = {}
         for lib_id, indices in self._lib_id_index.items():
-            result[lib_id] = [self._items[i] for i in indices]
+            result[lib_id] = [FootprintWrapper(self._items[i], self) for i in indices]
         return result
 
-    def filter_by_net(self, net_name: str) -> List[Footprint]:
+    def filter_by_net(self, net_name: str) -> List[FootprintWrapper]:
         """
         Filter footprints that have pads on a specific net.
 
@@ -150,7 +151,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
             net_name: Net name to filter by
 
         Returns:
-            List of footprints with at least one pad on the specified net
+            List of footprint wrappers with at least one pad on the specified net
 
         Example:
             gnd_footprints = collection.filter_by_net("GND")
@@ -161,9 +162,10 @@ class FootprintCollection(IndexedCollection[Footprint]):
                     return True
             return False
 
-        return self.find(has_net)
+        matching = self.find(has_net)
+        return [FootprintWrapper(fp, self) for fp in matching]
 
-    def filter_by_layer(self, layer: str) -> List[Footprint]:
+    def filter_by_layer(self, layer: str) -> List[FootprintWrapper]:
         """
         Filter footprints on a specific layer.
 
@@ -171,7 +173,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
             layer: Layer name (e.g., "F.Cu", "B.Cu")
 
         Returns:
-            List of footprints on the specified layer
+            List of footprint wrappers on the specified layer
 
         Example:
             front_components = collection.filter_by_layer("F.Cu")
@@ -179,7 +181,7 @@ class FootprintCollection(IndexedCollection[Footprint]):
         self._ensure_indexes_current()
 
         indices = self._layer_index.get(layer, [])
-        return [self._items[i] for i in indices]
+        return [FootprintWrapper(self._items[i], self) for i in indices]
 
     # Bulk operations
 

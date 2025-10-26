@@ -78,7 +78,9 @@ class TestFootprintCollectionReferenceIndex:
 
         result = collection.get_by_reference("R1")
 
-        assert result == fp
+        # get_by_reference now returns a wrapper
+        assert result is not None
+        assert result.data == fp  # Compare underlying data
         assert result.value == "10k"
 
     def test_get_nonexistent_reference_returns_none(self):
@@ -112,8 +114,11 @@ class TestFootprintCollectionReferenceIndex:
         collection.add(fp1)
         collection.add(fp2)
 
-        assert collection.get_by_reference("R1") == fp1
-        assert collection.get_by_reference("R2") == fp2
+        # get_by_reference now returns wrappers
+        result1 = collection.get_by_reference("R1")
+        result2 = collection.get_by_reference("R2")
+        assert result1 is not None and result1.data == fp1
+        assert result2 is not None and result2.data == fp2
 
     def test_reference_index_updated_on_remove(self):
         """Test that reference index is updated when removing."""
@@ -256,9 +261,10 @@ class TestFootprintCollectionNetFilter:
 
         gnd_footprints = collection.filter_by_net("GND")
 
+        # filter_by_net now returns wrappers
         assert len(gnd_footprints) == 2
-        assert fp1 in gnd_footprints
-        assert fp2 in gnd_footprints
+        assert any(w.data == fp1 for w in gnd_footprints)
+        assert any(w.data == fp2 for w in gnd_footprints)
 
     def test_filter_by_net_no_matches(self):
         """Test filtering by net with no matches."""
@@ -454,6 +460,9 @@ class TestFootprintCollectionSearch:
             lambda fp: 0 <= fp.position.x <= 50 and 0 <= fp.position.y <= 50
         )
 
+        # find() returns raw dataclasses, get_by_reference() returns wrappers
         assert len(in_region) == 2
-        assert collection.get_by_reference("R1") in in_region
-        assert collection.get_by_reference("R2") in in_region
+        r1_wrapper = collection.get_by_reference("R1")
+        r2_wrapper = collection.get_by_reference("R2")
+        assert r1_wrapper is not None and r1_wrapper.data in in_region
+        assert r2_wrapper is not None and r2_wrapper.data in in_region

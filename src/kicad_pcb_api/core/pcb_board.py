@@ -27,6 +27,22 @@ from .types import (
 )
 from ..utils.validation import PCBValidator, ValidationResult
 
+# Import managers
+from ..managers import (
+    DRCManager,
+    NetManager,
+    PlacementManager,
+    RoutingManager,
+    ValidationManager,
+)
+
+# Import collections
+from ..collections import (
+    FootprintCollection,
+    TrackCollection,
+    ViaCollection,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,9 +64,90 @@ class PCBBoard:
         self.parser = PCBParser()
         self.pcb_data = self._create_empty_pcb()
         self._filepath = None
+        self._modified = False
+        self._modification_trackers = {
+            'footprints': set(),
+            'tracks': set(),
+            'vias': set(),
+            'zones': set(),
+            'graphics': set(),
+        }
+
+
+        # Initialize collections
+        self._footprints_collection = FootprintCollection()
+        self._tracks_collection = TrackCollection()
+        self._vias_collection = ViaCollection()
+
+        # Initialize managers
+        self.drc = DRCManager(self)
+        self.net = NetManager(self)
+        self.placement = PlacementManager(self)
+        self.routing = RoutingManager(self)
+        self.validation = ValidationManager(self)
 
         if filepath:
             self.load(filepath)
+            # Sync collections after loading
+            self._sync_collections_from_data()
+
+
+    def _sync_collections_from_data(self):
+        """Sync collection wrappers with pcb_data after loading."""
+        # Update footprints collection
+        self._footprints_collection.clear()
+        for fp in self.pcb_data.get("footprints", []):
+            self._footprints_collection.add(fp)
+
+        # Update tracks collection
+        self._tracks_collection.clear()
+        for track in self.pcb_data.get("tracks", []):
+            self._tracks_collection.add(track)
+
+        # Update vias collection
+        self._vias_collection.clear()
+        for via in self.pcb_data.get("vias", []):
+            self._vias_collection.add(via)
+
+    @property
+    def footprints(self) -> FootprintCollection:
+        """Get footprints collection."""
+        return self._footprints_collection
+
+    @property
+    def tracks(self) -> TrackCollection:
+        """Get tracks collection."""
+        return self._tracks_collection
+
+    @property
+    def vias(self) -> ViaCollection:
+        """Get vias collection."""
+        return self._vias_collection
+
+    @property
+    def nets(self):
+        """Get all net numbers used in the board."""
+        return self.net.get_all_nets()
+
+    @property
+    def issues(self):
+        """Get validation issues from last validation run."""
+        return self.validation.issues
+
+    # Convenience methods that delegate to managers
+
+    def place_grid(self, references, start_x, start_y, spacing_x, spacing_y, columns):
+        """Place components in a grid pattern."""
+        return self.placement.place_in_grid(references, start_x, start_y, spacing_x, spacing_y, columns)
+
+    def check_drc(self, min_track_width=0.1, max_track_width=10.0, min_via_size=0.2, min_via_drill=0.1):
+        """Run DRC checks on the board."""
+        return self.drc.check_all(min_track_width, max_track_width, min_via_size, min_via_drill)
+
+    def validate(self):
+        """Run all validation checks on the board."""
+        return self.validation.validate_all()
+
 
     def _create_empty_pcb(self) -> Dict[str, Any]:
         """Create an empty PCB data structure with minimal required elements."""
@@ -227,25 +324,118 @@ class PCBBoard:
 
         Args:
             filepath: Path to the .kicad_pcb file
-        """
-        logger.info(f"Loading PCB from {filepath}")
-        self.pcb_data = self.parser.parse_file(filepath)
-        logger.info(f"Loaded {len(self.pcb_data['footprints'])} footprints")
 
-    def save(self, filepath: Union[str, Path]):
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            ValueError: If the file extension is not .kicad_pcb
+            PermissionError: If the file can't be read
+        """
+        filepath = Path(filepath)
+
+        # Validate file extension first (before checking existence)
+        if filepath.suffix != '.kicad_pcb':
+            raise ValueError(f"Invalid file extension: {filepath.suffix}. Expected .kicad_pcb")
+
+        # Validate file exists
+        if not filepath.exists():
+            raise FileNotFoundError(f"PCB file not found: {filepath}")
+
+        # Validate it's a file (not a directory)
+        if not filepath.is_file():
+            raise ValueError(f"Path is not a file: {filepath}")
+
+        try:
+            logger.info(f"Loading PCB from {filepath}")
+            self.pcb_data = self.parser.parse_file(filepath)
+            self._filepath = filepath
+            self._modified = False
+            self.reset_modified()
+            logger.info(f"Loaded {len(self.pcb_data['footprints'])} footprints")
+        except PermissionError as e:
+            raise PermissionError(f"Permission denied reading file: {filepath}") from e
+        except Exception as e:
+            logger.error(f"Failed to load PCB from {filepath}: {e}")
+            raise
+
+    def save(self, filepath: Optional[Union[str, Path]] = None):
         """
         Save the PCB to a file.
 
         Args:
-            filepath: Path to save the .kicad_pcb file
-        """
-        save_path = Path(filepath)
-        logger.info(f"Saving PCB to {save_path}")
-        self.parser.write_file(self.pcb_data, save_path)
+            filepath: Path to save the .kicad_pcb file. If None, uses the path
+                     from load() or previous save()
 
-        # Update stored filepath
-        self._filepath = save_path
-        logger.info("PCB saved successfully")
+        Raises:
+            ValueError: If filepath is None and no previous path is set
+            PermissionError: If the file can't be written
+        """
+        if filepath is None:
+            if self._filepath is None:
+                raise ValueError("No filepath specified and no previous filepath set. "
+                               "Please provide a filepath to save()")
+            save_path = self._filepath
+        else:
+            save_path = Path(filepath)
+
+        # Validate file extension
+        if save_path.suffix != '.kicad_pcb':
+            raise ValueError(f"Invalid file extension: {save_path.suffix}. Expected .kicad_pcb")
+
+        try:
+            logger.info(f"Saving PCB to {save_path}")
+            self.parser.write_file(self.pcb_data, save_path)
+
+            # Update stored filepath and reset modification tracking
+            self._filepath = save_path
+            self._modified = False
+            self.reset_modified()
+            logger.info("PCB saved successfully")
+        except PermissionError as e:
+            raise PermissionError(f"Permission denied writing file: {save_path}") from e
+        except Exception as e:
+            logger.error(f"Failed to save PCB to {save_path}: {e}")
+            raise
+
+    @property
+    def is_modified(self) -> bool:
+        """
+        Check if the PCB has been modified since last load/save.
+
+        Returns:
+            True if the PCB has unsaved changes, False otherwise
+        """
+        if self._modified:
+            return True
+
+        # Check if any collections have been modified by comparing length
+        # or checking modification trackers
+        for key, tracker in self._modification_trackers.items():
+            if tracker:
+                return True
+
+        return False
+
+    def reset_modified(self):
+        """Reset modification tracking after a successful save."""
+        self._modified = False
+        for tracker in self._modification_trackers.values():
+            tracker.clear()
+
+    def _mark_modified(self, collection: Optional[str] = None):
+        """
+        Mark the PCB as modified.
+
+        Args:
+            collection: Optional collection name that was modified
+        """
+        self._modified = True
+        if collection and collection in self._modification_trackers:
+            self._modification_trackers[collection].add(collection)
+
+    @property
+    def filepath(self) -> Optional[Path]:
+        """Get the current filepath associated with this PCB."""
+        return self._filepath
 
     def add_footprint(
         self,
@@ -314,8 +504,10 @@ class PCBBoard:
         # Add default pads based on footprint type
         self._add_default_pads(footprint)
 
-        # Add to PCB
+        # Add to PCB data and collection
         self.pcb_data["footprints"].append(footprint)
+        self._footprints_collection.add(footprint)
+        self._mark_modified('footprints')
         logger.debug(f"Added footprint {reference} at ({x}, {y})")
 
         return footprint
@@ -894,6 +1086,7 @@ class PCBBoard:
         )
 
         self.pcb_data["tracks"].append(track)
+        self._tracks_collection.add(track)
         logger.debug(f"Added track from ({start_x}, {start_y}) to ({end_x}, {end_y})")
 
         return track
@@ -1068,6 +1261,7 @@ class PCBBoard:
         )
 
         self.pcb_data["vias"].append(via)
+        self._vias_collection.add(via)
         logger.debug(f"Added via at ({x}, {y})")
 
         return via
@@ -1475,9 +1669,14 @@ class PCBBoard:
 
         return (min_x, min_y, max_x, max_y)
 
-    @property
-    def footprints(self) -> Dict[str, Footprint]:
-        """Get footprints as a dictionary keyed by reference."""
+    def get_footprints_dict(self) -> Dict[str, Footprint]:
+        """Get footprints as a dictionary keyed by reference.
+
+        Note: This is a legacy method. Use pcb.footprints collection instead.
+
+        Returns:
+            Dictionary mapping reference to Footprint
+        """
         return {fp.reference: fp for fp in self.pcb_data["footprints"]}
 
     def add_footprint_object(self, footprint: Footprint) -> None:
@@ -1491,8 +1690,9 @@ class PCBBoard:
         if not footprint.uuid:
             footprint.uuid = str(uuid_module.uuid4())
 
-        # Add to PCB
+        # Add to PCB data and collection
         self.pcb_data["footprints"].append(footprint)
+        self._footprints_collection.add(footprint)
         logger.debug(
             f"Added footprint {footprint.reference} at ({footprint.position.x}, {footprint.position.y})"
         )
@@ -1840,6 +2040,7 @@ class PCBBoard:
 
         if footprint:
             self.pcb_data["footprints"].append(footprint)
+            self._footprints_collection.add(footprint)
             logger.debug(f"Added footprint {reference} ({footprint_id}) at ({x}, {y})")
 
         return footprint

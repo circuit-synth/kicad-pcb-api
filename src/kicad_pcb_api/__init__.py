@@ -40,6 +40,45 @@ from .core.types import (
     Zone,
 )
 
+# New foundation components
+from .core.config import config, PCBConfig
+from .core.factory import PCBElementFactory
+from .core.geometry import BoundingBox, distance, rotate_point
+from .core.exceptions import (
+    KiCadPCBError,
+    ValidationError,
+    ReferenceError,
+    LayerError,
+    NetError,
+    GeometryError,
+)
+
+# Managers
+from .managers import (
+    DRCManager,
+    NetManager,
+    PlacementManager,
+    RoutingManager,
+    ValidationManager,
+)
+
+# Wrappers
+from .wrappers import (
+    FootprintWrapper,
+    TrackWrapper,
+    ViaWrapper,
+)
+
+# Collections
+from .collections import (
+    FootprintCollection,
+    TrackCollection,
+    ViaCollection,
+)
+
+# Protocols
+from .interfaces import PCBElement, Placeable, Routable
+
 __version__ = "0.0.1"
 __author__ = "Circuit-Synth Team"
 __email__ = "contact@circuit-synth.com"
@@ -55,13 +94,57 @@ def create_pcb():
 
 # Export key classes
 __all__ = [
+    # Main API
     "PCBBoard",
-    "PCBParser", 
+    "PCBParser",
     "load_pcb",
     "create_pcb",
+
+    # Configuration
+    "config",
+    "PCBConfig",
+
+    # Factory
+    "PCBElementFactory",
+
+    # Geometry
+    "BoundingBox",
+    "distance",
+    "rotate_point",
+
+    # Exceptions
+    "KiCadPCBError",
+    "ValidationError",
+    "ReferenceError",
+    "LayerError",
+    "NetError",
+    "GeometryError",
+
+    # Managers
+    "DRCManager",
+    "NetManager",
+    "PlacementManager",
+    "RoutingManager",
+    "ValidationManager",
+
+    # Wrappers
+    "FootprintWrapper",
+    "TrackWrapper",
+    "ViaWrapper",
+
+    # Collections
+    "FootprintCollection",
+    "TrackCollection",
+    "ViaCollection",
+
+    # Protocols
+    "PCBElement",
+    "Placeable",
+    "Routable",
+
     # Types
     "Arc",
-    "Footprint", 
+    "Footprint",
     "Layer",
     "Line",
     "Net",
@@ -71,6 +154,6 @@ __all__ = [
     "Rectangle",
     "Text",
     "Track",
-    "Via", 
+    "Via",
     "Zone",
 ]

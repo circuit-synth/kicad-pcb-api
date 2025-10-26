@@ -11,6 +11,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from ..core.types import Via, Point
+from ..wrappers.via import ViaWrapper
 from .base import IndexedCollection
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class ViaCollection(IndexedCollection[Via]):
 
     # Via-specific access methods
 
-    def filter_by_net(self, net: int) -> List[Via]:
+    def filter_by_net(self, net: int) -> List[ViaWrapper]:
         """
         Filter vias by net number.
 
@@ -73,7 +74,7 @@ class ViaCollection(IndexedCollection[Via]):
             net: Net number to filter by
 
         Returns:
-            List of vias on the specified net
+            List of via wrappers on the specified net
 
         Example:
             gnd_vias = collection.filter_by_net(0)
@@ -81,14 +82,14 @@ class ViaCollection(IndexedCollection[Via]):
         self._ensure_indexes_current()
 
         indices = self._net_index.get(net, [])
-        return [self._items[i] for i in indices]
+        return [ViaWrapper(self._items[i], self) for i in indices]
 
-    def get_by_net(self) -> Dict[int, List[Via]]:
+    def get_by_net(self) -> Dict[int, List[ViaWrapper]]:
         """
         Get vias grouped by net number.
 
         Returns:
-            Dictionary mapping net numbers to lists of vias
+            Dictionary mapping net numbers to lists of via wrappers
 
         Example:
             by_net = collection.get_by_net()
@@ -99,10 +100,10 @@ class ViaCollection(IndexedCollection[Via]):
 
         result = {}
         for net_num, indices in self._net_index.items():
-            result[net_num] = [self._items[i] for i in indices]
+            result[net_num] = [ViaWrapper(self._items[i], self) for i in indices]
         return result
 
-    def filter_by_layer_pair(self, layer1: str, layer2: str) -> List[Via]:
+    def filter_by_layer_pair(self, layer1: str, layer2: str) -> List[ViaWrapper]:
         """
         Filter vias connecting specific layer pair.
 
@@ -111,7 +112,7 @@ class ViaCollection(IndexedCollection[Via]):
             layer2: Second layer name
 
         Returns:
-            List of vias connecting the specified layers
+            List of via wrappers connecting the specified layers
 
         Example:
             front_to_back = collection.filter_by_layer_pair("F.Cu", "B.Cu")
@@ -119,26 +120,27 @@ class ViaCollection(IndexedCollection[Via]):
         def connects_layers(via: Via) -> bool:
             return (layer1 in via.layers and layer2 in via.layers)
 
-        return self.find(connects_layers)
+        matching = self.find(connects_layers)
+        return [ViaWrapper(via, self) for via in matching]
 
-    def filter_through_vias(self) -> List[Via]:
+    def filter_through_vias(self) -> List[ViaWrapper]:
         """
         Filter for through-hole vias (F.Cu to B.Cu).
 
         Returns:
-            List of through-hole vias
+            List of through-hole via wrappers
 
         Example:
             through_vias = collection.filter_through_vias()
         """
         return self.filter_by_layer_pair("F.Cu", "B.Cu")
 
-    def filter_blind_buried_vias(self) -> List[Via]:
+    def filter_blind_buried_vias(self) -> List[ViaWrapper]:
         """
         Filter for blind or buried vias (not through-hole).
 
         Returns:
-            List of blind/buried vias
+            List of blind/buried via wrappers
 
         Example:
             blind_buried = collection.filter_blind_buried_vias()
@@ -147,9 +149,10 @@ class ViaCollection(IndexedCollection[Via]):
             # Through-hole vias have both F.Cu and B.Cu
             return not ("F.Cu" in via.layers and "B.Cu" in via.layers)
 
-        return self.find(is_blind_or_buried)
+        matching = self.find(is_blind_or_buried)
+        return [ViaWrapper(via, self) for via in matching]
 
-    def filter_by_size(self, size: float) -> List[Via]:
+    def filter_by_size(self, size: float) -> List[ViaWrapper]:
         """
         Filter vias by exact size.
 
@@ -157,14 +160,15 @@ class ViaCollection(IndexedCollection[Via]):
             size: Via size (diameter) in millimeters
 
         Returns:
-            List of vias with the specified size
+            List of via wrappers with the specified size
 
         Example:
             standard_vias = collection.filter_by_size(0.8)
         """
-        return self.filter(size=size)
+        matching = self.filter(size=size)
+        return [ViaWrapper(via, self) for via in matching]
 
-    def filter_by_drill(self, drill: float) -> List[Via]:
+    def filter_by_drill(self, drill: float) -> List[ViaWrapper]:
         """
         Filter vias by exact drill size.
 
@@ -172,16 +176,17 @@ class ViaCollection(IndexedCollection[Via]):
             drill: Drill diameter in millimeters
 
         Returns:
-            List of vias with the specified drill size
+            List of via wrappers with the specified drill size
 
         Example:
             large_drill = collection.filter_by_drill(0.4)
         """
-        return self.filter(drill=drill)
+        matching = self.filter(drill=drill)
+        return [ViaWrapper(via, self) for via in matching]
 
     # Spatial queries
 
-    def find_nearest(self, point: Point, net: Optional[int] = None) -> Optional[Via]:
+    def find_nearest(self, point: Point, net: Optional[int] = None) -> Optional[ViaWrapper]:
         """
         Find the nearest via to a point.
 
@@ -190,12 +195,17 @@ class ViaCollection(IndexedCollection[Via]):
             net: Optional net filter (only search vias on this net)
 
         Returns:
-            Nearest via, or None if no vias exist
+            Nearest via wrapper, or None if no vias exist
 
         Example:
             nearest = collection.find_nearest(Point(50, 50), net=1)
         """
-        candidates = self._items if net is None else self.filter_by_net(net)
+        # Get raw candidates (wrappers if filtered by net, raw if all)
+        if net is None:
+            candidates = self._items
+        else:
+            wrappers = self.filter_by_net(net)
+            candidates = [w.data for w in wrappers]
 
         if not candidates:
             return None
@@ -205,10 +215,11 @@ class ViaCollection(IndexedCollection[Via]):
             dy = via.position.y - point.y
             return dx * dx + dy * dy
 
-        return min(candidates, key=distance_squared)
+        nearest = min(candidates, key=distance_squared)
+        return ViaWrapper(nearest, self)
 
     def find_in_region(self, min_x: float, min_y: float,
-                       max_x: float, max_y: float) -> List[Via]:
+                       max_x: float, max_y: float) -> List[ViaWrapper]:
         """
         Find vias within a rectangular region.
 
@@ -219,7 +230,7 @@ class ViaCollection(IndexedCollection[Via]):
             max_y: Maximum Y coordinate
 
         Returns:
-            List of vias within the region
+            List of via wrappers within the region
 
         Example:
             region_vias = collection.find_in_region(0, 0, 100, 100)
@@ -228,7 +239,8 @@ class ViaCollection(IndexedCollection[Via]):
             return (min_x <= via.position.x <= max_x and
                    min_y <= via.position.y <= max_y)
 
-        return self.find(in_region)
+        matching = self.find(in_region)
+        return [ViaWrapper(via, self) for via in matching]
 
     # Statistics and debugging
 

@@ -100,10 +100,11 @@ class PCBFormatter:
                 return sexp  # Unquoted
             else:
                 return f'"{sexp}"'  # Quoted
+        elif isinstance(sexp, bool):
+            # Must check bool before int, since bool is a subclass of int
+            return "yes" if sexp else "no"
         elif isinstance(sexp, (int, float)):
             return str(sexp)
-        elif isinstance(sexp, bool):
-            return "yes" if sexp else "no"
         else:
             return str(sexp)
 

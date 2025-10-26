@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from ..core.types import Track
+from ..wrappers.track import TrackWrapper
 from .base import IndexedCollection
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ class TrackCollection(IndexedCollection[Track]):
 
     # Track-specific access methods
 
-    def filter_by_net(self, net: int) -> List[Track]:
+    def filter_by_net(self, net: int) -> List[TrackWrapper]:
         """
         Filter tracks by net number.
 
@@ -84,7 +85,7 @@ class TrackCollection(IndexedCollection[Track]):
             net: Net number to filter by
 
         Returns:
-            List of tracks on the specified net
+            List of track wrappers on the specified net
 
         Example:
             gnd_tracks = collection.filter_by_net(0)  # GND is usually net 0
@@ -92,29 +93,29 @@ class TrackCollection(IndexedCollection[Track]):
         self._ensure_indexes_current()
 
         indices = self._net_index.get(net, [])
-        return [self._items[i] for i in indices]
+        return [TrackWrapper(self._items[i], self) for i in indices]
 
-    def get_by_net(self) -> Dict[int, List[Track]]:
+    def get_by_net(self) -> Dict[int, List[TrackWrapper]]:
         """
         Get tracks grouped by net number.
 
         Returns:
-            Dictionary mapping net numbers to lists of tracks
+            Dictionary mapping net numbers to lists of track wrappers
 
         Example:
             by_net = collection.get_by_net()
             for net_num, tracks in by_net.items():
-                total_length = sum(t.get_length() for t in tracks)
+                total_length = sum(t.length for t in tracks)
                 print(f"Net {net_num}: {len(tracks)} tracks, {total_length:.2f}mm")
         """
         self._ensure_indexes_current()
 
         result = {}
         for net_num, indices in self._net_index.items():
-            result[net_num] = [self._items[i] for i in indices]
+            result[net_num] = [TrackWrapper(self._items[i], self) for i in indices]
         return result
 
-    def filter_by_layer(self, layer: str) -> List[Track]:
+    def filter_by_layer(self, layer: str) -> List[TrackWrapper]:
         """
         Filter tracks by layer.
 
@@ -122,7 +123,7 @@ class TrackCollection(IndexedCollection[Track]):
             layer: Layer name (e.g., "F.Cu", "B.Cu", "In1.Cu")
 
         Returns:
-            List of tracks on the specified layer
+            List of track wrappers on the specified layer
 
         Example:
             front_tracks = collection.filter_by_layer("F.Cu")
@@ -130,14 +131,14 @@ class TrackCollection(IndexedCollection[Track]):
         self._ensure_indexes_current()
 
         indices = self._layer_index.get(layer, [])
-        return [self._items[i] for i in indices]
+        return [TrackWrapper(self._items[i], self) for i in indices]
 
-    def get_by_layer(self) -> Dict[str, List[Track]]:
+    def get_by_layer(self) -> Dict[str, List[TrackWrapper]]:
         """
         Get tracks grouped by layer.
 
         Returns:
-            Dictionary mapping layer names to lists of tracks
+            Dictionary mapping layer names to lists of track wrappers
 
         Example:
             by_layer = collection.get_by_layer()
@@ -148,10 +149,10 @@ class TrackCollection(IndexedCollection[Track]):
 
         result = {}
         for layer, indices in self._layer_index.items():
-            result[layer] = [self._items[i] for i in indices]
+            result[layer] = [TrackWrapper(self._items[i], self) for i in indices]
         return result
 
-    def filter_by_net_and_layer(self, net: int, layer: str) -> List[Track]:
+    def filter_by_net_and_layer(self, net: int, layer: str) -> List[TrackWrapper]:
         """
         Filter tracks by both net and layer.
 
@@ -160,14 +161,15 @@ class TrackCollection(IndexedCollection[Track]):
             layer: Layer name
 
         Returns:
-            List of tracks matching both criteria
+            List of track wrappers matching both criteria
 
         Example:
             front_gnd = collection.filter_by_net_and_layer(0, "F.Cu")
         """
-        return self.filter(net=net, layer=layer)
+        matching = self.filter(net=net, layer=layer)
+        return [TrackWrapper(track, self) for track in matching]
 
-    def filter_by_width(self, width: float) -> List[Track]:
+    def filter_by_width(self, width: float) -> List[TrackWrapper]:
         """
         Filter tracks by exact width.
 
@@ -175,12 +177,13 @@ class TrackCollection(IndexedCollection[Track]):
             width: Track width in millimeters
 
         Returns:
-            List of tracks with the specified width
+            List of track wrappers with the specified width
 
         Example:
             standard_tracks = collection.filter_by_width(0.25)
         """
-        return self.filter(width=width)
+        matching = self.filter(width=width)
+        return [TrackWrapper(track, self) for track in matching]
 
     # Length calculations
 
@@ -199,7 +202,7 @@ class TrackCollection(IndexedCollection[Track]):
             print(f"Net 1 total trace length: {total_length:.2f}mm")
         """
         tracks = self.filter_by_net(net)
-        return sum(track.get_length() for track in tracks)
+        return sum(track.length for track in tracks)
 
     def get_total_length_by_layer(self, layer: str) -> float:
         """
@@ -212,7 +215,7 @@ class TrackCollection(IndexedCollection[Track]):
             Total length in millimeters
         """
         tracks = self.filter_by_layer(layer)
-        return sum(track.get_length() for track in tracks)
+        return sum(track.length for track in tracks)
 
     def get_length_statistics(self) -> Dict[str, Any]:
         """

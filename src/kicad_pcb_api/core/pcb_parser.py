@@ -108,15 +108,15 @@ class PCBParser:
             if element_type == "version":
                 pcb_data["version"] = element[1]
             elif element_type == "generator":
-                pcb_data["generator"] = element[1]
+                pcb_data["generator"] = self._to_string(element[1])
                 if len(element) > 2:
                     gen_version = self._find_element(element, "generator_version")
                     if gen_version:
-                        pcb_data["generator_version"] = gen_version[1]
+                        pcb_data["generator_version"] = self._to_string(gen_version[1])
             elif element_type == "general":
                 pcb_data["general"] = self._parse_general(element)
             elif element_type == "paper":
-                pcb_data["paper"] = element[1]
+                pcb_data["paper"] = self._to_string(element[1])
             elif element_type == "layers":
                 pcb_data["layers"] = self._parse_layers(element)
             elif element_type == "setup":
@@ -125,7 +125,8 @@ class PCBParser:
                 net = self._parse_net(element)
                 if net:
                     pcb_data["nets"].append(net)
-            elif element_type == "footprint":
+            elif element_type == "footprint" or element_type == "module":
+                # "module" is old KiCad format, "footprint" is new
                 footprint = self._parse_footprint(element)
                 if footprint:
                     pcb_data["footprints"].append(footprint)
@@ -203,6 +204,12 @@ class PCBParser:
             return str(obj)
         return None
 
+    def _to_string(self, obj: Any) -> str:
+        """Convert a value to string, handling Symbol objects."""
+        if isinstance(obj, sexpdata.Symbol):
+            return str(obj)
+        return obj
+
     def _find_element(self, sexp: List, name: str) -> Optional[Any]:
         """Find an element by name in an S-expression."""
         for item in sexp:
@@ -264,7 +271,7 @@ class PCBParser:
 
             # Get layer
             layer_elem = self._find_element(sexp, "layer")
-            layer = layer_elem[1] if layer_elem else "F.Cu"
+            layer = self._to_string(layer_elem[1]) if layer_elem else "F.Cu"
 
             # Get UUID
             uuid_elem = self._find_element(sexp, "uuid")
@@ -370,7 +377,7 @@ class PCBParser:
 
         # Get layer
         layer_elem = self._find_element(sexp, "layer")
-        layer = layer_elem[1] if layer_elem else "F.SilkS"
+        layer = self._to_string(layer_elem[1]) if layer_elem else "F.SilkS"
 
         # Get UUID
         uuid_elem = self._find_element(sexp, "uuid")
@@ -400,8 +407,8 @@ class PCBParser:
             return None
 
         number = str(sexp[1])
-        pad_type = sexp[2]
-        shape = sexp[3]
+        pad_type = self._to_string(sexp[2])
+        shape = self._to_string(sexp[3])
 
         # Get position
         at_elem = self._find_element(sexp, "at")
@@ -647,7 +654,7 @@ class PCBParser:
         width = float(width_elem[1]) if width_elem else 0.25
 
         layer_elem = self._find_element(sexp, "layer")
-        layer = layer_elem[1] if layer_elem else "F.Cu"
+        layer = self._to_string(layer_elem[1]) if layer_elem else "F.Cu"
 
         track = Track(start=start, end=end, width=width, layer=layer)
 
