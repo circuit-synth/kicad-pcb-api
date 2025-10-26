@@ -18,11 +18,16 @@ This file provides guidance to Claude Code when working on the kicad-pcb-api pro
 
 ```
 kicad-pcb-api/
-├── python/                          # Core Python library
+├── src/                             # Core Python library
 │   ├── kicad_pcb_api/
+│   │   ├── collections/            # Collection management (NEW)
+│   │   │   ├── base.py             # IndexedCollection base
+│   │   │   ├── footprints.py       # FootprintCollection
+│   │   │   ├── tracks.py           # TrackCollection
+│   │   │   └── vias.py             # ViaCollection
 │   │   ├── core/                   # Core PCB manipulation
 │   │   │   ├── pcb_board.py        # Main PCBBoard class
-│   │   │   ├── pcb_parser.py       # S-expression parser  
+│   │   │   ├── pcb_parser.py       # S-expression parser
 │   │   │   ├── pcb_formatter.py    # S-expression formatter
 │   │   │   └── types.py            # Data structures
 │   │   ├── placement/              # Placement algorithms
@@ -39,7 +44,8 @@ kicad-pcb-api/
 │   │       ├── validation.py       # PCB validation
 │   │       └── kicad_cli.py        # KiCAD CLI integration
 │   ├── examples/                   # Usage examples
-│   └── tests/                      # Test suite
+│   └── tests/                      # Test suite (69 tests)
+├── docs/                           # Documentation
 └── README.md
 ```
 
@@ -47,19 +53,19 @@ kicad-pcb-api/
 
 ```bash
 # Install dependencies
-cd python && pip install -e ".[dev]"
+cd src && pip install -e ".[dev]"
 
 # Run tests
-cd python && pytest
+pytest src/tests
 
 # Install MCP server
 cd mcp-server && npm install && npm run build
 
 # Build package
-cd python && python -m build
+python -m build
 
-# Upload to PyPI
-cd python && python -m twine upload dist/*
+# Upload to PyPI (from root)
+python -m twine upload dist/*
 ```
 
 ## Core API Usage

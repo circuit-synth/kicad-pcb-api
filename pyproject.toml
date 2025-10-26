@@ -63,17 +63,17 @@ Issues = "https://github.com/circuit-synth/kicad-pcb-api/issues"
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/kicad_pcb_api"]
+packages = ["src/kicad_pcb_api"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "python/kicad_pcb_api",
+    "src/kicad_pcb_api",
     "README.md",
     "LICENSE",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["python/tests"]
+testpaths = ["src/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

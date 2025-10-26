@@ -654,7 +654,7 @@ pcb.segment[42].layer = 'F.Cu'
 
 ```
 kicad-pcb-api/
-├── python/
+├── src/
 │   ├── kicad_pcb_api/
 │   │   ├── core/                           # Core PCB functionality
 │   │   │   ├── pcb_board.py                # Main PCBBoard class
