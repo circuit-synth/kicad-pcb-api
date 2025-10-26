@@ -79,7 +79,7 @@ from .collections import (
 # Protocols
 from .interfaces import PCBElement, Placeable, Routable
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __author__ = "Circuit-Synth Team"
 __email__ = "contact@circuit-synth.com"
 

@@ -159,3 +159,5 @@ cython_debug/
 tmp/
 temp/
 *.tmp
+
+*.pypirc
