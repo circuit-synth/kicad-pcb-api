@@ -215,6 +215,18 @@ class Track:
     net_name: Optional[str] = None
     uuid: str = ""
 
+    def get_length(self) -> float:
+        """
+        Calculate the Euclidean length of the track.
+
+        Returns:
+            Length in millimeters
+        """
+        import math
+        dx = self.end.x - self.start.x
+        dy = self.end.y - self.start.y
+        return math.sqrt(dx * dx + dy * dy)
+
 
 @dataclass
 class Zone:
