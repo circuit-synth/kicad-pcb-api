@@ -53,9 +53,18 @@ Expand testing to multi-layer and more complex features:
 |---|------|----------|---------|--------|
 | 02 | `02-blank-pcb-4layer` | Basic Structure | 4-layer PCB stackup | 📋 TODO |
 | 36 | `36-simple-circuit-2-resistors` | Circuits | Complete circuit with nets | 📋 TODO |
-| 32 | `32-via-blind` | Vias | Blind via (top to inner) | 📋 TODO |
-| 33 | `33-via-buried` | Vias | Buried via (inner to inner) | 📋 TODO |
-| 12 | `12-silkscreen-top-text` | Silkscreen | Silkscreen text | 📋 TODO |
+| 32 | `32-via-blind` | Vias | Blind via (top to inner) | ⭐ PRIORITY |
+| 33 | `33-via-buried` | Vias | Buried via (inner to inner) | ⭐ PRIORITY |
+| 12 | `12-silkscreen-top-text` | Silkscreen | Silkscreen text | ⭐ PRIORITY |
+| 54 | `54-graphics-text` | Graphics | PCB text element | ⭐ PRIORITY |
+| 55 | `55-graphics-textbox` | Graphics | Text box element | ⭐ PRIORITY |
+| 56 | `56-graphics-table` | Graphics | Table on PCB | ⭐ PRIORITY |
+| 57 | `57-graphics-polygon` | Graphics | Drawn polygon shape | ⭐ PRIORITY |
+| 58 | `58-graphics-circle` | Graphics | Drawn circle | ⭐ PRIORITY |
+| 59 | `59-graphics-image` | Graphics | Bitmap/logo image | ⭐ PRIORITY |
+| 44 | `44-board-with-dimensions` | Advanced | Dimension annotations | ⭐ PRIORITY |
+| 60 | `60-different-layers` | Advanced | Elements on different layers | ⭐ PRIORITY |
+| 61 | `61-ruled-area` | Zones | Ruled/hatched copper area | ⭐ PRIORITY |
 
 ## Phase 3: Comprehensive References (Priority ⭐)
 
