@@ -152,7 +152,6 @@ cython_debug/
 # Project specific
 *.kicad_pcb.bak
 *.kicad_sch.bak
-.claude/
 *.egg-info/
 
 # Temporary files
