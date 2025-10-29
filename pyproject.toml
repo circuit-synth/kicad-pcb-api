@@ -81,6 +81,18 @@ addopts = [
     "-v",
     "--tb=short",
     "--strict-markers",
+    "--cov=kicad_pcb_api",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=70",
+]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests with file I/O",
+    "format: Format preservation tests",
+    "drc: Design rule check tests",
+    "placement: Placement algorithm tests",
+    "routing: Routing tests",
 ]
 
 [tool.ruff]
