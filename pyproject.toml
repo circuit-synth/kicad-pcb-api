@@ -82,6 +82,9 @@ addopts = [
     "--tb=short",
     "--strict-markers",
 ]
+markers = [
+    "integration: marks tests as integration tests (end-to-end workflows)",
+]
 
 [tool.ruff]
 line-length = 88
