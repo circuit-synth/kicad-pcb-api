@@ -94,6 +94,9 @@ markers = [
     "placement: Placement algorithm tests",
     "routing: Routing tests",
 ]
+markers = [
+    "integration: marks tests as integration tests (end-to-end workflows)",
+]
 
 [tool.ruff]
 line-length = 88
