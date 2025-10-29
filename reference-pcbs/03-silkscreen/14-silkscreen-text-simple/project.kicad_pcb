@@ -1,0 +1,37 @@
+(kicad_pcb (version 20241229) (generator "pcbnew") (generator_version "9.0")
+	(general
+		(thickness 1.6)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(2 "B.Cu" signal)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(25 "Edge.Cuts" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+	)
+	(net 0 "")
+	(gr_rect
+		(start 50 50)
+		(end 150 150)
+		(stroke (width 0.05) (type solid))
+		(fill none)
+		(layer "Edge.Cuts")
+		(uuid "a2038340-83af-4064-824c-f4571468d80e")
+	)
+	(gr_text "KiCAD PCB API"
+		(at 100 100 0)
+		(layer "F.SilkS")
+		(uuid "d5038340-83af-4064-824c-f4571468d80h")
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.3)
+			)
+			(justify left bottom)
+		)
+	)
+	(embedded_fonts no)
+)
