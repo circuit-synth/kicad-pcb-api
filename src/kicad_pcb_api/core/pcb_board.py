@@ -653,10 +653,9 @@ class PCBBoard:
         Returns:
             Footprint object if found, None otherwise
         """
-        for footprint in self.pcb_data["footprints"]:
-            if footprint.reference == reference:
-                return footprint
-        return None
+        # Use O(1) collection lookup instead of O(n) linear scan
+        wrapper = self.footprints.get_by_reference(reference)
+        return wrapper._data if wrapper else None
 
     def list_footprints(self) -> List[Tuple[str, str, float, float]]:
         """
@@ -710,6 +709,10 @@ class PCBBoard:
         new_net = Net(new_net_num, net_name)
         self.pcb_data["nets"].append(new_net)
 
+        # Invalidate net name index cache
+        if hasattr(self, '_net_name_index'):
+            delattr(self, '_net_name_index')
+
         logger.debug(f"Added net {new_net_num}: {net_name}")
         return new_net_num
 
@@ -723,10 +726,12 @@ class PCBBoard:
         Returns:
             Net object if found, None otherwise
         """
-        for net in self.pcb_data["nets"]:
-            if net.name == net_name:
-                return net
-        return None
+        # Build index on first access for O(1) lookups
+        # This is a simple optimization - a full NetCollection would be better long-term
+        if not hasattr(self, '_net_name_index'):
+            self._net_name_index = {net.name: net for net in self.pcb_data.get("nets", [])}
+
+        return self._net_name_index.get(net_name)
 
     def get_board_outline(self) -> Optional[List[Tuple[float, float]]]:
         """
