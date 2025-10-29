@@ -88,14 +88,11 @@ addopts = [
 ]
 markers = [
     "unit: Unit tests for individual components",
-    "integration: Integration tests with file I/O",
+    "integration: Integration tests with file I/O (end-to-end workflows)",
     "format: Format preservation tests",
     "drc: Design rule check tests",
     "placement: Placement algorithm tests",
     "routing: Routing tests",
-]
-markers = [
-    "integration: marks tests as integration tests (end-to-end workflows)",
 ]
 
 [tool.ruff]
