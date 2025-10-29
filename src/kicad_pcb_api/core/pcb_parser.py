@@ -1,5 +1,7 @@
 """
 Parser for KiCad PCB files using S-expressions.
+
+Uses a modular registry-based architecture for extensible parsing.
 """
 
 import logging
@@ -9,6 +11,23 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import sexpdata
 
+from ..parsers.elements import (
+    EmbeddedFontsParser,
+    FootprintParser,
+    GeneralParser,
+    GeneratorParser,
+    GraphicsLineParser,
+    GraphicsRectParser,
+    LayersParser,
+    NetParser,
+    PaperParser,
+    SetupParser,
+    TrackParser,
+    VersionParser,
+    ViaParser,
+    ZoneParser,
+)
+from ..parsers.registry import ParserRegistry
 from .pcb_formatter import PCBFormatter
 from .types import (
     Arc,
@@ -33,14 +52,48 @@ class PCBParser:
     """
     Parser for KiCad PCB files.
 
-    Handles reading and writing .kicad_pcb files using S-expressions.
+    Uses a modular registry-based architecture where each element type
+    (footprint, track, via, etc.) is handled by a dedicated parser.
     """
 
     def __init__(self):
-        """Initialize the parser."""
+        """Initialize the parser with registry and element parsers."""
         self.version = 20241229  # KiCad 9 version
         self.generator = "pcbnew"
         self.generator_version = "9.0"
+
+        # Initialize parser registry
+        self.registry = ParserRegistry()
+        self._register_parsers()
+
+    def _register_parsers(self):
+        """Register all element parsers with the registry."""
+        # Simple metadata parsers
+        self.registry.register("version", VersionParser())
+        self.registry.register("generator", GeneratorParser())
+        self.registry.register("paper", PaperParser())
+        self.registry.register("setup", SetupParser())
+        self.registry.register("embedded_fonts", EmbeddedFontsParser())
+
+        # Board structure parsers
+        self.registry.register("general", GeneralParser())
+        self.registry.register("layers", LayersParser())
+        self.registry.register("net", NetParser())
+
+        # Component parsers
+        self.registry.register("footprint", FootprintParser())
+        self.registry.register("module", FootprintParser())  # Legacy format
+
+        # PCB element parsers
+        self.registry.register("via", ViaParser())
+        self.registry.register("segment", TrackParser())
+        self.registry.register("zone", ZoneParser())
+
+        # Graphics element parsers
+        self.registry.register("gr_line", GraphicsLineParser())
+        self.registry.register("gr_rect", GraphicsRectParser())
+
+        logger.debug(f"Registered {len(self.registry.get_registered_types())} element parsers")
 
     def parse_file(self, filepath: Union[str, Path]) -> Dict[str, Any]:
         """
@@ -66,7 +119,7 @@ class PCBParser:
 
     def parse_string(self, content: str) -> Dict[str, Any]:
         """
-        Parse PCB content from a string.
+        Parse PCB content from a string using the registry-based parser.
 
         Args:
             content: S-expression string content
@@ -95,69 +148,75 @@ class PCBParser:
             "tracks": [],
             "zones": [],
             "groups": [],
+            "graphics": [],
             "embedded_fonts": False,
         }
 
-        # Parse PCB elements
+        # Parse PCB elements using registry
         for element in sexp[1:]:
             if not self._is_sexp_list(element):
                 continue
 
-            element_type = self._get_symbol_name(element[0])
+            # Use registry to parse element
+            parsed = self.registry.parse_element(element)
+            if parsed is None:
+                # Unknown element type - log and skip
+                element_type = self._get_symbol_name(element[0])
+                logger.debug(f"Skipping unknown element type: {element_type}")
+                continue
 
-            if element_type == "version":
-                pcb_data["version"] = element[1]
-            elif element_type == "generator":
-                pcb_data["generator"] = self._to_string(element[1])
-                if len(element) > 2:
-                    gen_version = self._find_element(element, "generator_version")
-                    if gen_version:
-                        pcb_data["generator_version"] = self._to_string(gen_version[1])
-            elif element_type == "general":
-                pcb_data["general"] = self._parse_general(element)
-            elif element_type == "paper":
-                pcb_data["paper"] = self._to_string(element[1])
-            elif element_type == "layers":
-                pcb_data["layers"] = self._parse_layers(element)
-            elif element_type == "setup":
-                pcb_data["setup"] = element  # Store raw for now
-            elif element_type == "net":
-                net = self._parse_net(element)
-                if net:
-                    pcb_data["nets"].append(net)
-            elif element_type == "footprint" or element_type == "module":
-                # "module" is old KiCad format, "footprint" is new
-                footprint = self._parse_footprint(element)
-                if footprint:
-                    pcb_data["footprints"].append(footprint)
-            elif element_type == "via":
-                via = self._parse_via(element)
-                if via:
-                    pcb_data["vias"].append(via)
-            elif element_type == "segment":
-                track = self._parse_track(element)
-                if track:
-                    pcb_data["tracks"].append(track)
-            elif element_type == "gr_line":
-                line = self._parse_line(element)
-                if line:
-                    if "graphics" not in pcb_data:
-                        pcb_data["graphics"] = []
-                    pcb_data["graphics"].append(line)
-            elif element_type == "gr_rect":
-                rect = self._parse_rectangle(element)
-                if rect:
-                    if "graphics" not in pcb_data:
-                        pcb_data["graphics"] = []
-                    pcb_data["graphics"].append(rect)
-            elif element_type == "zone":
-                zone = self._parse_zone(element)
-                if zone:
-                    pcb_data["zones"].append(zone)
-            elif element_type == "embedded_fonts":
-                pcb_data["embedded_fonts"] = element[1] == "yes"
+            # Store parsed result in appropriate location based on type
+            self._store_parsed_element(pcb_data, parsed)
 
         return pcb_data
+
+    def _store_parsed_element(self, pcb_data: Dict[str, Any], parsed: Any):
+        """
+        Store a parsed element in the appropriate location in pcb_data.
+
+        Args:
+            pcb_data: The PCB data dictionary
+            parsed: The parsed element (can be dict, Net, Footprint, Track, Via, Zone, etc.)
+        """
+        # Handle dict results from simple parsers
+        if isinstance(parsed, dict):
+            elem_type = parsed.get("type")
+
+            if elem_type == "version":
+                pcb_data["version"] = parsed["value"]
+            elif elem_type == "generator":
+                pcb_data["generator"] = parsed["name"]
+                if "version" in parsed:
+                    pcb_data["generator_version"] = parsed["version"]
+            elif elem_type == "paper":
+                pcb_data["paper"] = parsed["size"]
+            elif elem_type == "setup":
+                pcb_data["setup"] = parsed.get("raw", parsed)
+            elif elem_type == "embedded_fonts":
+                pcb_data["embedded_fonts"] = parsed["enabled"]
+            elif elem_type == "general":
+                pcb_data["general"] = parsed
+            elif elem_type == "layers":
+                pcb_data["layers"] = parsed.get("layers", [])
+            else:
+                logger.warning(f"Unknown dict result type: {elem_type}")
+
+        # Handle typed objects from element parsers
+        elif isinstance(parsed, Net):
+            pcb_data["nets"].append(parsed)
+        elif isinstance(parsed, Footprint):
+            pcb_data["footprints"].append(parsed)
+        elif isinstance(parsed, Via):
+            pcb_data["vias"].append(parsed)
+        elif isinstance(parsed, Track):
+            pcb_data["tracks"].append(parsed)
+        elif isinstance(parsed, Zone):
+            pcb_data["zones"].append(parsed)
+        elif isinstance(parsed, (Line, Rectangle)):
+            # Graphics elements
+            pcb_data["graphics"].append(parsed)
+        else:
+            logger.warning(f"Unknown parsed element type: {type(parsed)}")
 
     def write_file(self, pcb_data: Dict[str, Any], filepath: Union[str, Path]):
         """
